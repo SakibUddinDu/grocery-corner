@@ -22,18 +22,11 @@ const client = new MongoClient(uri, {
   useUnifiedTopology: true,
 });
 client.connect((err) => {
+  console.log(err);
   const productCollection = client.db("grocery").collection("groceryItems");
   const ordersCollection = client.db("grocery").collection("orders");
 
-  app.post("/addProduct", (req, res) => {
-    const newProduct = req.body;
-    console.log("adding new Product : ", newProduct);
-    productCollection.insertOne(newProduct).then((result) => {
-      console.log("inserted Count", result);
-      res.send(result.insertedCount > 0);
-    });
-  });
-
+  //sending all data to server (fakeData removed)
   app.post("/addItems", (req, res) => {
     const item = req.body;
     productCollection.insertMany(item).then((result) => {
@@ -41,6 +34,7 @@ client.connect((err) => {
     });
   });
 
+  //Loading all product for Home Page
   app.get('/products', (req, res) =>{
     productCollection.find()
     .toArray((err, products) =>{
@@ -49,17 +43,17 @@ client.connect((err) => {
     })
   })
 
-  app.get('/product/:id', (req, res) =>{
-    console.log(req.params);
-    productCollection.find({_id: ObjectId(req.params.id)})
-    .toArray((err, products) =>{
-      res.send(products[0])
-      // console.log('from db ', products);
-    })
+
+  // loading product with an specific id
+app.get('/product/:id', (req, res) =>{
+  console.log(req.params);
+  productCollection.find({_id: ObjectId(req.params.id)})
+  .toArray((err, products) =>{
+    res.send(products[0])
   })
-  // console.log('connection error',err);
+})
 
-
+// sending order to server
   app.post("/addOrder", (req, res) => {
     const order = req.body;
     console.log("adding new Product : ", order);
@@ -68,6 +62,25 @@ client.connect((err) => {
       res.send(result.insertedCount > 0);
     });
   });
+
+  // loading orders filtering with email 
+  app.get('/orders', (req, res) =>{
+    // console.log(req.query.email);
+    ordersCollection.find({email : req.query.email})
+    .toArray((err, orders) =>{
+      res.send(orders)
+    })
+  })
+
+    //adding a single product by the admin
+    app.post("/addProduct", (req, res) => {
+      const newProduct = req.body;
+      console.log("adding new Product : ", newProduct);
+      productCollection.insertOne(newProduct).then((result) => {
+        console.log("inserted Count", result);
+        res.send(result.insertedCount > 0);
+      });
+    });
 
 });
 
